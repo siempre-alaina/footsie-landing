@@ -825,6 +825,21 @@ img, svg { display: block; max-width: 100%; }
   .nav-links a:last-child { border-bottom: 0; }
 
   .hero { padding: 80px 0 60px; }
+
+  /* The hero copy fills almost the whole hero at these widths, so the desktop
+     scrim (sized to the text block) ends up covering ~100% of the hero and
+     ~200% of the maze — washing out the maze and every agent behind it.
+     Narrow screens don't need it anyway: the headline is large and high
+     contrast here, and only the small eyebrow needs protecting. */
+  .hero-content::before {
+    inset: -20px -12px;
+    background: radial-gradient(
+      ellipse 80% 30% at 50% 22%,
+      rgba(255, 255, 255, 0.88) 0%,
+      rgba(255, 255, 255, 0.60) 45%,
+      rgba(255, 255, 255, 0) 78%
+    );
+  }
 }
 
 

@@ -187,6 +187,10 @@ python3 -m http.server 8080
   `@import` in CSS, which would block stylesheet parsing) — always pin to 400/500/600
 - **`prefers-reduced-motion` is honoured** — `maze.js` places the agents statically
   and never starts the animation loop. Keep any new motion behind that check
+- **The hero scrim is scaled down below 920px.** It's sized to the hero copy,
+  which at narrow widths is nearly the whole hero — at full desktop strength it
+  covered ~100% of the hero and ~200% of the maze, washing out the maze and
+  every agent. Keep the mobile override if you touch `.hero-content::before`
 - **Nav collapses to a toggle below 920px** (`nav.js`) — it must not simply be
   hidden, or phones get no navigation at all
 - **Network stats in the nav and hero-meta are placeholder values**, not live
