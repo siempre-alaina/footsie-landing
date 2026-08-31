@@ -28,7 +28,7 @@ runtime from a `data-maze` attribute. There are no pre-rendered maze images.
 
 ## Page Sections
 
-1. **Nav** — sticky header, glassmorphic blur, brand + links + relay status + CTA
+1. **Nav** — sticky header, glassmorphic blur, brand + links + CTA
 2. **Hero** (`#top`) — dynamic SVG maze background, 10 animated agents, headline, CTA
 3. **Problem** (`#problem`) — "stuck in someone else's maze?", 3 problem cards
 4. **How** (`#how`) — "what footsie.ai does", 4 capability cards (teal/violet/coral/amber)
@@ -197,6 +197,8 @@ python3 -m http.server 8080
   every agent. Keep the mobile override if you touch `.hero-content::before`
 - **Nav collapses to a toggle below 920px** (`nav.js`) — it must not simply be
   hidden, or phones get no navigation at all
-- **Network stats in the nav and hero-meta are placeholder values**, not live
-  telemetry. They are marked with HTML comments; keep those if the numbers stay
+- **No invented metrics.** The nav previously showed a fake relay counter and
+  the hero a fake "14,328 agents · 92 relays · 1.2M records" line. Both were
+  removed — don't reintroduce made-up figures. If real numbers become
+  available, wire them to an endpoint rather than hardcoding
 - The page references `#cta` for CTA scroll targets and uses anchor links for nav

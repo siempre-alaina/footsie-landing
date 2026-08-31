@@ -150,18 +150,6 @@ img, svg { display: block; max-width: 100%; }
   border-radius: 1px;
 }
 
-.nav-relay {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--gray-500);
-  margin-right: 16px;
-  white-space: nowrap;
-}
-.nav-relay .meta-dot { background: var(--status-active-dot); }
-
 /* ───── HERO ───── */
 .hero {
   position: relative;
@@ -324,12 +312,9 @@ img, svg { display: block; max-width: 100%; }
   color: var(--gray-500);
 }
 .meta-item { display: inline-flex; align-items: center; gap: 8px; }
-.meta-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
-.meta-dot-live { background: var(--status-active-dot); }
 .mono { font-family: var(--font-mono); }
 .eyebrow-muted { color: var(--gray-500); }
 .meta-faint { color: var(--gray-500); }  /* gray-400 was 2.54:1 — failed AA */
-.meta-sep { color: var(--gray-300); }
 
 /* ───── ACCESSIBILITY ───── */
 
@@ -796,11 +781,6 @@ img, svg { display: block; max-width: 100%; }
 /* ───── responsive ───── */
 @media (max-width: 920px) {
   .problem-grid, .you-grid, .how-grid { grid-template-columns: 1fr; }
-
-  /* The relay counter is placeholder telemetry and the least useful thing
-     on a small screen, so it still goes. The links now collapse into a
-     toggle instead of disappearing. */
-  .nav-relay { display: none; }
 
   .nav-toggle { display: inline-flex; }
 

@@ -133,9 +133,6 @@ design, so the file can be dropped into another footsie surface unchanged.
 A few things are deliberately unfinished, since this is a design and front-end
 exercise rather than a deployed product:
 
-- **The network statistics are placeholder values.** "14,328 agents · 92 relays
-  · 1.2M records" and the relay status indicator are illustrative figures for
-  the design, marked as such in `index.html`. They are not live telemetry.
 - **Several links point at `#`** — Docs, Blog, About and the footer navigation
   have no destinations yet.
 - **No Open Graph image.** The meta tags are in place but `og:image` needs a
