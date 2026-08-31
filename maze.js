@@ -436,12 +436,23 @@
     //  - too wide a band and ten agents spread so thin they never share an
     //    edge, so they never meet and never bounce off each other.
     // Three corridors keeps them visible AND densely enough packed to collide.
+    // Two bands.
+    //  INNER  — a narrow, dense band where agents regularly share an edge and
+    //           so actually meet and bounce off each other.
+    //  RIM    — the outer corridors, so the edges of the maze aren't empty.
+    //           These sit outside the hero's vertical bounds, so rim agents
+    //           patrol the left and right flanks of the circle.
     var BAND_MIN = Math.min(3, rings - 1);
     var BAND_MAX = Math.min(rings - 1, BAND_MIN + 2);
+    var RIM_MIN  = Math.min(rings - 1, BAND_MAX + 1);
+    var RIM_MAX  = rings - 1;
+
+    // Agents past this index are placed on the rim instead of the inner band.
+    var INNER_COUNT = 10;
 
     var outerNodes = [];
     for (var n = 0; n < nodes.length; n++) {
-      if (nodes[n].corridor >= BAND_MIN && nodes[n].corridor <= BAND_MAX && adjList[n].length > 0) {
+      if (nodes[n].corridor >= BAND_MIN && nodes[n].corridor <= RIM_MAX && adjList[n].length > 0) {
         outerNodes.push(n);
       }
     }
@@ -457,18 +468,33 @@
       return function () { s = (s * 16807) % 2147483647; return s / 2147483647; };
     }
 
-    // 10 agents, each with distinct speed and PRNG seed
+    // How many agents to run is decided by the markup, not hardcoded here —
+    // add or remove .hero-agent elements in index.html and this follows.
+    var agentCount = agentEls.length;
+
+    // Distinct speed and PRNG seed per agent.
     var speeds   = [35, 32, 42, 28, 33, 37, 40, 30, 38, 34];
     var rngSeeds = [42, 137, 271, 389, 503, 641, 797, 911, 1049, 1187];
+    for (var ex = speeds.length; ex < agentCount; ex++) {
+      // Rim arcs are much longer, so keep these a touch slower or they read
+      // as racing compared with the inner group.
+      speeds.push(26 + ((ex * 5) % 13));
+      rngSeeds.push(1301 + ex * 173);
+    }
 
-    // Start positions spread across the band at well-separated angles, so the
+    // Start positions spread across each band at well-separated angles, so the
     // agents fan out around the maze rather than bunching in one quadrant.
     var slotsTotal = mazeCfg.slots || 12;
     var startPositions = [];
-    for (var sp = 0; sp < 10; sp++) {
+    for (var sp = 0; sp < agentCount; sp++) {
+      var onRim   = sp >= INNER_COUNT;
+      var bMin    = onRim ? RIM_MIN : BAND_MIN;
+      var bMax    = onRim ? RIM_MAX : BAND_MAX;
+      var seq     = onRim ? sp - INNER_COUNT : sp;
+      var seqLen  = onRim ? Math.max(1, agentCount - INNER_COUNT) : INNER_COUNT;
       startPositions.push([
-        BAND_MIN + (sp % (BAND_MAX - BAND_MIN + 1)),
-        Math.round((sp * slotsTotal) / 10) % slotsTotal
+        bMin + (seq % (bMax - bMin + 1)),
+        Math.round((seq * slotsTotal) / seqLen + (onRim ? slotsTotal / (seqLen * 2) : 0)) % slotsTotal
       ]);
     }
 
@@ -483,7 +509,7 @@
 
     var usedStartNodes = {};
     var agents = [];
-    for (var i = 0; i < Math.min(agentEls.length, 10); i++) {
+    for (var i = 0; i < agentCount; i++) {
       var sc = startPositions[i][0], sk = startPositions[i][1];
       // Find the best-connected node on this corridor, not already used
       var startIdx = -1;

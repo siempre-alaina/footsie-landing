@@ -133,9 +133,18 @@ freely without touching the JS.
 - **Connectivity guarantee:** every corridor segment has ≥1 gap on both bounding rings
 
 ### Agent Animation
-- **10 agents** (HTML `<img>` elements) on the outer corridors (`BAND_MIN`..`BAND_MAX`,
-  i.e. corridor 3 out to `rings - 1`). Inner corridors sit behind the headline
-  and its scrim, so agents there are invisible
+- **Agent count comes from the markup** — `maze.js` reads `.hero-agent` elements
+  from `index.html` (currently 16). Add or remove elements there; speeds and PRNG
+  seeds extend automatically
+- **Two bands.** The first `INNER_COUNT` (10) agents go in a deliberately narrow
+  inner band (corridors `BAND_MIN`..`BAND_MAX`, i.e. 3-5); the rest go on the rim
+  (`RIM_MIN`..`RIM_MAX`, i.e. 6 to `rings - 1`)
+  - The inner band is kept narrow **on purpose**: spread over too many corridors,
+    agents almost never share an edge and the collision bounce stops happening
+  - Corridors 1-2 are avoided entirely — they sit behind the headline and its
+    scrim, so agents there are invisible
+  - Rim corridors exceed the hero's vertical bounds, so those agents patrol the
+    left and right flanks of the circle
 - **Smart start selection** — each agent picks the best-connected node on its target corridor (≥2 edges, prefers radial connections), no duplicates, only nodes inside the visible hero band
 - **Speeds:** 28-42 px/s (amber fastest, violet slowest)
 - **Per-agent PRNG** (distinct seeds) for independent turn decisions at intersections

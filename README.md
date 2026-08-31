@@ -4,7 +4,7 @@ A single-page marketing site built with vanilla HTML, CSS and JavaScript. No
 framework, no build step, no dependencies — open `index.html` and it runs.
 
 The hero is the reason this repository is interesting. It generates a circular
-maze as SVG at runtime, then walks ten pixel-art agents through its corridors
+maze as SVG at runtime, then walks sixteen pixel-art agents through its corridors
 like Pac-Man ghosts — turning at junctions, reversing at dead ends, bouncing off
 each other, and eating pellets as they go.
 
