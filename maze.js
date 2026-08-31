@@ -363,13 +363,18 @@
   /* ================================================================ */
   /*  Agent animation                                                  */
   /*                                                                   */
-  /*  COORDINATES: the hero maze SVG is rendered at 130% of the hero   */
-  /*  width (styles.css: .hero-maze-bg svg { width: 130% }), centred   */
-  /*  on the hero. The SVG viewBox is 0..SVG_SIZE, so:                 */
-  /*    1 SVG-unit = (CSS_SCALE * heroWidth) / SVG_SIZE px             */
-  /*    base      = (CSS_SCALE * heroWidth) / 2   (radius scale)       */
-  /*  CSS_SCALE below MUST match the CSS width%. Agents share these    */
-  /*  formulas with the maze dots, so they align exactly.              */
+  /*  COORDINATES: the maze SVG's on-screen size is decided by CSS, so */
+  /*  measure() reads it back from the DOM instead of assuming a scale */
+  /*  factor. The SVG viewBox is 0..SVG_SIZE, so:                      */
+  /*    1 SVG-unit = svgWidth / SVG_SIZE px                            */
+  /*    base       = svgWidth / 2            (radius scale)            */
+  /*  Agents share these formulas with the maze dots, so an agent's    */
+  /*  path lands exactly on the pellets down the middle of a corridor. */
+  /*                                                                   */
+  /*  Do NOT reintroduce a hardcoded scale constant here. There was    */
+  /*  one (CSS_SCALE = 1.3, matching `width: 130%`), but .hero-maze-bg */
+  /*  is a flex container and flex-shrink pulled the SVG back to 100%. */
+  /*  The 30% error put every agent on a wall instead of in a corridor.*/
   /* ================================================================ */
   function animateHeroAgents() {
     var container = document.querySelector(".hero-agents");
@@ -393,16 +398,52 @@
       return;
     }
 
-    var SVG_SIZE  = mazeCfg.size || 800;
-    var CSS_SCALE = 1.3;   // must match .hero-maze-bg svg { width: 130% }
+    var SVG_SIZE = mazeCfg.size || 800;
+
+    // The rendered size of the maze is decided by CSS, so MEASURE it rather
+    // than assuming a scale factor. A hardcoded constant was wrong here:
+    // .hero-maze-bg is a flex container, so the SVG's `width: 130%` is shrunk
+    // straight back to 100% by the default flex-shrink, and agents were being
+    // placed ~30% too far out — i.e. on top of the walls instead of in the
+    // corridors between them.
+    var svgEl = mazeEl.querySelector("svg");
+    if (!svgEl) return;
+
+    // Geometry for the current layout: how big one maze unit is on screen, and
+    // where the maze's centre sits relative to the agent layer's centre.
+    function measure() {
+      var s = svgEl.getBoundingClientRect();
+      var h = hero.getBoundingClientRect();
+      return {
+        base: s.width / 2,                 // px per (SVG_SIZE / 2) maze units
+        pxPerUnit: s.width / SVG_SIZE,
+        ox: s.left + s.width / 2 - (h.left + h.width / 2),
+        oy: s.top + s.height / 2 - (h.top + h.height / 2),
+        halfW: h.width / 2 - 30,
+        halfH: h.height / 2 - 30
+      };
+    }
 
     var maze  = buildMaze(mazeCfg);
     var nodes = maze.nodes, adjList = maze.adj;
 
-    // Pick starting nodes on corridors 2-5 (clearly between visible walls)
+    // Which corridors agents live in. Outer corridors read best: the inner
+    // ones sit behind the headline and its scrim. Clamped to the corridors
+    // that actually exist for this ring count.
+    var rings = mazeCfg.rings || 7;
+    // Keep the band narrow. Two competing constraints:
+    //  - too far in and the agents disappear behind the headline scrim;
+    //  - too wide a band and ten agents spread so thin they never share an
+    //    edge, so they never meet and never bounce off each other.
+    // Three corridors keeps them visible AND densely enough packed to collide.
+    var BAND_MIN = Math.min(3, rings - 1);
+    var BAND_MAX = Math.min(rings - 1, BAND_MIN + 2);
+
     var outerNodes = [];
     for (var n = 0; n < nodes.length; n++) {
-      if (nodes[n].corridor >= 2 && nodes[n].corridor <= 5 && adjList[n].length > 0) outerNodes.push(n);
+      if (nodes[n].corridor >= BAND_MIN && nodes[n].corridor <= BAND_MAX && adjList[n].length > 0) {
+        outerNodes.push(n);
+      }
     }
     if (outerNodes.length < 7) {
       for (var n = 0; n < nodes.length; n++) {
@@ -420,22 +461,24 @@
     var speeds   = [35, 32, 42, 28, 33, 37, 40, 30, 38, 34];
     var rngSeeds = [42, 137, 271, 389, 503, 641, 797, 911, 1049, 1187];
 
-    // Start positions spread across corridors 2-5 at well-separated angles.
-    // These corridors are clearly visible between the thick wall lines.
-    var startPositions = [
-      [3, 0],   [4, 3],   [2, 6],   [5, 9],   [3, 12],
-      [4, 15],  [2, 18],  [5, 21],  [3, 4],   [4, 10],
-    ];
+    // Start positions spread across the band at well-separated angles, so the
+    // agents fan out around the maze rather than bunching in one quadrant.
+    var slotsTotal = mazeCfg.slots || 12;
+    var startPositions = [];
+    for (var sp = 0; sp < 10; sp++) {
+      startPositions.push([
+        BAND_MIN + (sp % (BAND_MAX - BAND_MIN + 1)),
+        Math.round((sp * slotsTotal) / 10) % slotsTotal
+      ]);
+    }
 
     // Agents must START inside the visible hero band — the routing keeps
     // them there afterwards, so don't spawn any outside it.
-    var initRect = hero.getBoundingClientRect();
-    var initBase = (CSS_SCALE * initRect.width) / 2;
-    var initHalfW = initRect.width / 2 - 30;
-    var initHalfH = initRect.height / 2 - 30;
+    var initGeo = measure();
     function inBand(n) {
-      var p = nodePos(nodes[n], initBase);
-      return Math.abs(p.x) <= initHalfW && Math.abs(p.y) <= initHalfH;
+      var p = nodePos(nodes[n], initGeo.base);
+      return Math.abs(p.x + initGeo.ox) <= initGeo.halfW &&
+             Math.abs(p.y + initGeo.oy) <= initGeo.halfH;
     }
 
     var usedStartNodes = {};
@@ -484,14 +527,15 @@
      * (2) reverse back the way we came (the Pac-Man dead-end turn),
      * (3) if stranded off-screen (e.g. after a resize), the edge that
      *     gets closest back to the visible band — walked, never teleported. */
-    function chooseNextEdge(ag, base, halfW, halfH) {
+    function chooseNextEdge(ag, geo) {
+      var base = geo.base, halfW = geo.halfW, halfH = geo.halfH;
       var edges = adjList[ag.fromNode];
 
       var forward = [];
       for (var e = 0; e < edges.length; e++) {
         if (edges[e].to === ag.prevNode) continue;
         var dp = nodePos(nodes[edges[e].to], base);
-        if (Math.abs(dp.x) <= halfW && Math.abs(dp.y) <= halfH) forward.push(edges[e]);
+        if (Math.abs(dp.x + geo.ox) <= halfW && Math.abs(dp.y + geo.oy) <= halfH) forward.push(edges[e]);
       }
       if (forward.length > 0) {
         return forward[Math.floor(ag.rng() * forward.length)];
@@ -500,7 +544,7 @@
       for (var e = 0; e < edges.length; e++) {
         if (edges[e].to !== ag.prevNode) continue;
         var bp = nodePos(nodes[edges[e].to], base);
-        if (Math.abs(bp.x) <= halfW && Math.abs(bp.y) <= halfH) {
+        if (Math.abs(bp.x + geo.ox) <= halfW && Math.abs(bp.y + geo.oy) <= halfH) {
           return { to: edges[e].to, type: edges[e].type, deadEnd: edges.length === 1 };
         }
       }
@@ -508,7 +552,8 @@
       var best = edges[0], bestOver = Infinity;
       for (var e = 0; e < edges.length; e++) {
         var op = nodePos(nodes[edges[e].to], base);
-        var over = Math.max(Math.abs(op.x) - halfW, 0) + Math.max(Math.abs(op.y) - halfH, 0);
+        var over = Math.max(Math.abs(op.x + geo.ox) - halfW, 0) +
+                   Math.max(Math.abs(op.y + geo.oy) - halfH, 0);
         if (over < bestOver) { bestOver = over; best = edges[e]; }
       }
       return best;
@@ -653,13 +698,12 @@
       if (dt > 0.1) dt = 0.1;
       prev = now;
 
-      var rect = hero.getBoundingClientRect();
-      var base = (CSS_SCALE * rect.width) / 2;
+      var geo = measure();
+      var base = geo.base;
 
       // Sprite size follows corridor width so agents always fit between
       // walls at any viewport size. DOM write only when the value changes.
-      var pxPerUnit = (CSS_SCALE * rect.width) / SVG_SIZE;
-      var clearPx = (drU - mazeCfg.strokeW) * pxPerUnit;
+      var clearPx = (drU - (mazeCfg.strokeW || 6)) * geo.pxPerUnit;
       var newW = Math.max(22, Math.min(42, Math.round(clearPx * 0.72)));
       if (newW !== spriteW) {
         spriteW = newW;
@@ -669,8 +713,8 @@
       }
 
       // Visible bounds (computed ONCE per frame, used by all agents)
-      var halfW = rect.width / 2 - 30;
-      var halfH = rect.height / 2 - 30;
+      var halfW = geo.halfW;
+      var halfH = geo.halfH;
 
       var positions = [];
 
@@ -695,7 +739,7 @@
           var arrived = nodes[ag.fromNode];
           eatDot("d:" + arrived.corridor + ":" + arrived.slot, now);
 
-          var pick = chooseNextEdge(ag, base, halfW, halfH);
+          var pick = chooseNextEdge(ag, geo);
           ag.toNode   = pick.to;
           ag.edgeType = pick.type;
 
@@ -731,7 +775,8 @@
         // collision positions use the true path position)
         var bob = Math.sin(now * 0.008 + i * 1.7) * 1.5;
         ag.el.style.transform =
-          "translate(calc(-50% + " + pos.x.toFixed(1) + "px), calc(-50% + " + (pos.y + bob).toFixed(1) + "px)) scaleX(" + flip + ")";
+          "translate(calc(-50% + " + (pos.x + geo.ox).toFixed(1) + "px), calc(-50% + " +
+          (pos.y + geo.oy + bob).toFixed(1) + "px)) scaleX(" + flip + ")";
         positions.push(pos);
       }
 
@@ -777,7 +822,7 @@
       }
 
       if (debug) {
-        drawDebug(rect, base, positions);
+        drawDebug(hero.getBoundingClientRect(), base, positions);
         if (++dbgFrame % 30 === 0) checkInvariants(base, halfW, halfH, positions);
       }
 
@@ -832,16 +877,61 @@
     try { cfg = JSON.parse(mazeEl.dataset.maze); } catch (err) { return; }
 
     var hero = container.closest(".hero");
+    var svgEl = mazeEl.querySelector("svg");
+    if (!svgEl) return;
+
+    // If the hero has not been laid out yet (zero width — e.g. the page was
+    // loaded in a hidden container), every node would fail the on-screen test
+    // and we would hide all ten agents with no way back. Wait for a real
+    // layout instead. Unlike the animated path there is no per-frame loop
+    // here to recover on its own.
+    if (hero.getBoundingClientRect().width < 1) {
+      if (typeof ResizeObserver === "function") {
+        var ro = new ResizeObserver(function () {
+          if (hero.getBoundingClientRect().width >= 1) {
+            ro.disconnect();
+            placeAgentsStatically();
+          }
+        });
+        ro.observe(hero);
+      } else {
+        window.addEventListener("resize", function retry() {
+          if (hero.getBoundingClientRect().width >= 1) {
+            window.removeEventListener("resize", retry);
+            placeAgentsStatically();
+          }
+        });
+      }
+      return;
+    }
+
     var maze = buildMaze(cfg);
-    var base = (1.3 * hero.getBoundingClientRect().width) / 2;
-    var halfW = hero.getBoundingClientRect().width / 2 - 30;
-    var halfH = hero.getBoundingClientRect().height / 2 - 30;
+    // Same rule as the animated path: measure the rendered maze, never assume.
+    var s = svgEl.getBoundingClientRect();
+    var h = hero.getBoundingClientRect();
+    var base = s.width / 2;
+    var ox = s.left + s.width / 2 - (h.left + h.width / 2);
+    var oy = s.top + s.height / 2 - (h.top + h.height / 2);
+    var halfW = h.width / 2 - 30;
+    var halfH = h.height / 2 - 30;
 
     var candidates = [];
     for (var n = 0; n < maze.nodes.length; n++) {
-      if (maze.nodes[n].corridor < 2 || maze.nodes[n].corridor > 5) continue;
+      if (maze.nodes[n].corridor < 3 || maze.nodes[n].corridor > (cfg.rings || 7) - 1) continue;
       var p = nodePos(maze.nodes[n], base);
-      if (Math.abs(p.x) <= halfW && Math.abs(p.y) <= halfH) candidates.push(p);
+      if (Math.abs(p.x + ox) <= halfW && Math.abs(p.y + oy) <= halfH) {
+        candidates.push({ x: p.x + ox, y: p.y + oy });
+      }
+    }
+
+    // Fall back to any on-screen node rather than leaving the hero empty.
+    if (!candidates.length) {
+      for (var f = 0; f < maze.nodes.length; f++) {
+        var fp = nodePos(maze.nodes[f], base);
+        if (Math.abs(fp.x + ox) <= halfW && Math.abs(fp.y + oy) <= halfH) {
+          candidates.push({ x: fp.x + ox, y: fp.y + oy });
+        }
+      }
     }
 
     var els = container.querySelectorAll(".hero-agent");

@@ -99,6 +99,11 @@ Every maze on the page is declared in the markup and rendered at runtime:
 from that same attribute to build the agent navigation graph, so there is one
 source of truth per maze.
 
+The agent layer measures the rendered `<svg>` rather than assuming how big CSS
+made it. That matters more than it sounds: the corridors are only ~30px wide on
+screen, so a scale assumption that is even slightly off puts every agent on a
+wall instead of in the gap between two.
+
 ## Design system
 
 Tokens live in `colors_and_type.css`.

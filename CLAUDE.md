@@ -114,8 +114,13 @@ maze the agents walk is always the maze that was drawn. Do NOT reintroduce a
 second copy of this config in `maze.js` — that duplication previously meant any
 edit to the attribute silently desynced the agents from the walls.
 
-CSS renders the SVG at 130% width (`width: 130%` on `.hero-maze-bg svg`).
-`CSS_SCALE` in `maze.js` must match that percentage.
+**Never hardcode the SVG's on-screen scale in `maze.js`.** `measure()` reads the
+rendered `<svg>` rect from the DOM every frame. There used to be a
+`CSS_SCALE = 1.3` constant mirroring `width: 130%`, but `.hero-maze-bg` is a
+flex container and the default `flex-shrink` pulls the SVG back to 100% — so
+the constant was 30% wrong and every agent was drawn on top of a wall instead
+of in the corridor between walls. Measuring also means the CSS can change
+freely without touching the JS.
 
 ### Pellet Dots
 - **Arc corridor dots** — at every slot center on every corridor midpoint (5px, opacity 0.55)
@@ -128,7 +133,9 @@ CSS renders the SVG at 130% width (`width: 130%` on `.hero-maze-bg svg`).
 - **Connectivity guarantee:** every corridor segment has ≥1 gap on both bounding rings
 
 ### Agent Animation
-- **10 agents** (HTML `<img>` elements) on corridors 2-5
+- **10 agents** (HTML `<img>` elements) on the outer corridors (`BAND_MIN`..`BAND_MAX`,
+  i.e. corridor 3 out to `rings - 1`). Inner corridors sit behind the headline
+  and its scrim, so agents there are invisible
 - **Smart start selection** — each agent picks the best-connected node on its target corridor (≥2 edges, prefers radial connections), no duplicates, only nodes inside the visible hero band
 - **Speeds:** 28-42 px/s (amber fastest, violet slowest)
 - **Per-agent PRNG** (distinct seeds) for independent turn decisions at intersections
@@ -142,10 +149,11 @@ CSS renders the SVG at 130% width (`width: 130%` on `.hero-maze-bg svg`).
 
 ### Coordinate System
 ```
-CSS_SCALE = 1.3                       // .hero-maze-bg svg { width: 130% }
-base = (CSS_SCALE * heroWidth) / 2    // e.g., 936 for 1440px viewport
-pixel_offset = node.rFrac * base      // distance from center in pixels
-rFrac = midR / (SVG_SIZE / 2)         // normalized corridor midpoint radius
+svgRect = <svg>.getBoundingClientRect()   // MEASURED, never assumed
+base    = svgRect.width / 2               // px per (SVG_SIZE / 2) maze units
+ox, oy  = svg centre - hero centre         // maze centre vs agent-layer centre
+pixel_offset = node.rFrac * base + ox      // distance from centre in pixels
+rFrac   = midR / (SVG_SIZE / 2)            // normalised corridor midpoint radius
 ```
 Agent positions are relative to the hero center (CSS `top: 50%; left: 50%` + transform).
 Dots and agents use identical radius/angle formulas — verified to 0.0000px alignment.
