@@ -442,13 +442,16 @@
     //  RIM    — the outer corridors, so the edges of the maze aren't empty.
     //           These sit outside the hero's vertical bounds, so rim agents
     //           patrol the left and right flanks of the circle.
-    var BAND_MIN = Math.min(3, rings - 1);
-    var BAND_MAX = Math.min(rings - 1, BAND_MIN + 2);
+    var BAND_MIN = Math.min(4, rings - 1);
+    var BAND_MAX = Math.min(rings - 1, BAND_MIN + 1);
     var RIM_MIN  = Math.min(rings - 1, BAND_MAX + 1);
     var RIM_MAX  = rings - 1;
 
     // Agents past this index are placed on the rim instead of the inner band.
-    var INNER_COUNT = 10;
+    // Deliberately a minority: the inner band passes behind the headline and
+    // paragraph, where agents are hard to see. The inner group only needs to
+    // be big enough that agents there still meet and bounce.
+    var INNER_COUNT = 5;
 
     var outerNodes = [];
     for (var n = 0; n < nodes.length; n++) {
@@ -513,7 +516,7 @@
       var sc = startPositions[i][0], sk = startPositions[i][1];
       // Find the best-connected node on this corridor, not already used
       var startIdx = -1;
-      var bestScore = 0;
+      var bestScore = -Infinity;
       for (var n = 0; n < nodes.length; n++) {
         if (usedStartNodes[n]) continue;
         if (!inBand(n)) continue;
@@ -522,11 +525,14 @@
           for (var e = 0; e < adjList[n].length; e++) {
             if (adjList[n][e].type === "radial") radCount++;
           }
-          var score = adjList[n].length + radCount * 3;
-          var slotDist = Math.abs(nodes[n].slot - sk);
+            var slotDist = Math.abs(nodes[n].slot - sk);
           var slotCount = mazeCfg.slots || 12;
           if (slotDist > slotCount / 2) slotDist = slotCount - slotDist;
-          score -= slotDist * 0.1;
+          // Angular spread dominates; connectivity only breaks ties. The old
+          // weighting was the other way round (connectivity up to ~10 vs a
+          // 1.2 max spread penalty), so agents all converged on the few
+          // best-connected junctions instead of fanning out.
+          var score = -slotDist * 10 + adjList[n].length + radCount;
           if (score > bestScore) { bestScore = score; startIdx = n; }
         }
       }

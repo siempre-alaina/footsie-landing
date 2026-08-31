@@ -136,9 +136,13 @@ freely without touching the JS.
 - **Agent count comes from the markup** — `maze.js` reads `.hero-agent` elements
   from `index.html` (currently 16). Add or remove elements there; speeds and PRNG
   seeds extend automatically
-- **Two bands.** The first `INNER_COUNT` (10) agents go in a deliberately narrow
-  inner band (corridors `BAND_MIN`..`BAND_MAX`, i.e. 3-5); the rest go on the rim
-  (`RIM_MIN`..`RIM_MAX`, i.e. 6 to `rings - 1`)
+- **Two bands.** The first `INNER_COUNT` (5) agents go in a narrow inner band
+  (corridors `BAND_MIN`..`BAND_MAX`, i.e. 4-5); the remaining 11 go on the rim
+  (`RIM_MIN`..`RIM_MAX`, i.e. 6 to `rings - 1`). The rim deliberately holds the
+  majority — the inner corridors pass behind the headline and paragraph
+- **Start-node scoring puts angular spread first** (`-slotDist * 10`), with
+  connectivity only breaking ties. The reverse weighting made every agent
+  converge on the few best-connected junctions and look bunched
   - The inner band is kept narrow **on purpose**: spread over too many corridors,
     agents almost never share an edge and the collision bounce stops happening
   - Corridors 1-2 are avoided entirely — they sit behind the headline and its
