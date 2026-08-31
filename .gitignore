@@ -1,0 +1,10 @@
+.DS_Store
+Thumbs.db
+
+# Local editor / assistant state
+.claude/settings.local.json
+.vscode/
+.idea/
+
+# Local dev
+*.log

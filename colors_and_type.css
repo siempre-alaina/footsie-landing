@@ -1,0 +1,132 @@
+/* ============================================================
+   footsie.ai — colors & type tokens
+   Source of truth: footsie-logo-guide-v2.pdf, footsie_brand_voice_v2.pdf
+   and Tailwind theme in src-ref webapp (src/index.css).
+   ============================================================ */
+
+/* --- Outfit (wordmark + UI). Pinned weights: 400 / 500 / 600 only.
+       Brand rule: never use Outfit Light or Outfit Bold.
+       The font files are loaded via <link> in index.html — an @import here
+       would block stylesheet parsing until it resolved. --- */
+
+:root {
+  /* ——— Core palette (logo guide §06) ——— */
+  --footsie-navy:        #0F172A;
+  --footsie-teal:        #0D9488;
+  --footsie-white:       #FFFFFF;
+
+  /* ——— Secondary / supporting ——— */
+  --footsie-teal-light:  #14B8A9;
+  --footsie-teal-tint:   #E6F7F5;
+  --footsie-off-white:   #F8FAFC;
+  --footsie-mid-gray:    #64748B;
+
+  /* ——— Full teal scale ——— */
+  --footsie-50:  #f0fdfa;
+  --footsie-100: #ccfbf1;
+  --footsie-200: #99f6e4;
+  --footsie-300: #5eead4;
+  --footsie-400: #2dd4bf;
+  --footsie-500: #14b8a6;
+  --footsie-600: #0d9488;
+  --footsie-700: #0f766e;
+  --footsie-800: #115e59;
+  --footsie-900: #134e4a;
+
+  /* ——— Neutral scale ——— */
+  --gray-50:  #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+
+  /* ——— Agent character colors (pixel-art Seeker sprites only) ——— */
+  --seeker-teal:    #0D9488;
+  --seeker-coral:   #F97066;
+  --seeker-amber:   #F59E0B;
+  --seeker-violet:  #8B5CF6;
+
+  /* ——— Type stack ——— */
+  --font-sans: "Outfit", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+
+  /* ——— Type scale ——— */
+  --text-3xl: 1.875rem;
+  --text-2xl: 1.5rem;
+  --text-xl:  1.25rem;
+  --text-lg:  1.125rem;
+  --text-md:  1rem;
+  --text-sm:  0.875rem;
+  --text-xs:  0.75rem;
+  --text-2xs: 0.625rem;
+
+  --leading-tight:  1.2;
+  --leading-snug:   1.35;
+  --leading-normal: 1.5;
+  --leading-loose:  1.7;
+
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+
+  /* ——— Radii ——— */
+  --radius-sm:  0.25rem;
+  --radius:     0.375rem;
+  --radius-md:  0.5rem;
+  --radius-lg:  0.75rem;
+  --radius-pill: 9999px;
+
+  /* ——— Shadows ——— */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow:    0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  /* ——— Surfaces ——— */
+  --bg-page:        var(--gray-50);
+  --bg-surface:     var(--footsie-white);
+  --bg-elevated:    var(--footsie-white);
+  --bg-muted:       var(--gray-50);
+
+  --border-default: var(--gray-200);
+  --border-strong:  var(--gray-300);
+  --border-soft:    var(--gray-100);
+
+  --fg-primary:   var(--gray-900);
+  --fg-secondary: var(--gray-600);
+  --fg-muted:     var(--gray-500);
+  --fg-faint:     var(--gray-400);
+  --fg-inverse:   var(--footsie-white);
+
+  --link-color:        var(--footsie-700);
+  --link-hover:        var(--footsie-800);
+
+  /* ——— Status colors ——— */
+  --status-active-dot:  #22c55e;
+  --status-info-bg:     #fef3c7;
+  --status-info-fg:     #b45309;
+}
+
+html { color-scheme: light; }
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--fg-primary);
+  background: var(--bg-page);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.wordmark {
+  font-family: var(--font-sans);
+  font-weight: var(--weight-medium);
+  letter-spacing: -0.02em;
+  color: var(--footsie-navy);
+  text-transform: lowercase;
+}
+.wordmark .tld { color: var(--footsie-teal); }
