@@ -160,7 +160,7 @@ img, svg { display: block; max-width: 100%; }
   margin-right: 16px;
   white-space: nowrap;
 }
-.nav-relay .meta-dot { background: #22c55e; }
+.nav-relay .meta-dot { background: var(--status-active-dot); }
 
 /* ───── HERO ───── */
 .hero {
@@ -325,6 +325,9 @@ img, svg { display: block; max-width: 100%; }
 }
 .meta-item { display: inline-flex; align-items: center; gap: 8px; }
 .meta-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.meta-dot-live { background: var(--status-active-dot); }
+.mono { font-family: var(--font-mono); }
+.eyebrow-muted { color: var(--gray-500); }
 .meta-faint { color: var(--gray-500); }  /* gray-400 was 2.54:1 — failed AA */
 .meta-sep { color: var(--gray-300); }
 

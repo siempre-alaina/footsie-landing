@@ -106,7 +106,10 @@ wall instead of in the gap between two.
 
 ## Design system
 
-Tokens live in `colors_and_type.css`.
+Tokens live in `colors_and_type.css`. That file is the **full brand token set**
+— the complete teal and grey scales, type scale, radii and shadows — not just
+the subset this page happens to use. Roughly half the tokens are unused here by
+design, so the file can be dropped into another footsie surface unchanged.
 
 | | |
 |---|---|
